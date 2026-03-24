@@ -108,7 +108,7 @@ class Header extends Component {
             {/* Navigation - No Home link */}
             <nav className={`header-nav ${mobileMenuOpen ? 'open' : ''}`}>
               <Link to="/products" className="nav-link" onClick={() => this.setState({ mobileMenuOpen: false })}>
-                Sản phẩm
+                Products
               </Link>
               {categories.map(([catId, catName]) => (
                 <Link
