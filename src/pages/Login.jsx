@@ -31,8 +31,8 @@ class Login extends Component {
 
     try {
       const res = await api.post('/login', { email, password });
-      const { _id, token } = res.data;
-      this.props.onLogin(_id, token);
+      const { customer, token } = res.data;
+      this.props.onLogin(customer._id, token);
       this.setState({ success: true, loading: false });
     } catch (err) {
       this.setState({

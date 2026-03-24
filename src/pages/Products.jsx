@@ -8,10 +8,13 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('vi-VN') + 'đ';
 };
 
-// Helper to get category name
-const getCategoryName = (category) => {
+// Helper to get category name using a lookup map
+const getCategoryName = (category, catLookup) => {
   if (!category) return 'Gear';
   if (typeof category === 'object' && category.name) return category.name;
+  if (typeof category === 'string' && catLookup && catLookup.has(category)) {
+    return catLookup.get(category);
+  }
   if (typeof category === 'string' && category.length < 30) return category;
   return 'Gear';
 };
@@ -23,6 +26,7 @@ class Products extends Component {
       products: [],
       filteredProducts: [],
       categories: [],
+      catLookup: new Map(),
       selectedCategory: 'all',
       sortBy: 'default',
       loading: true,
@@ -35,14 +39,23 @@ class Products extends Component {
 
   fetchProducts = async () => {
     try {
+      // Fetch categories for ID→name lookup
+      let catLookup = new Map();
+      try {
+        const catRes = await api.get('/categories');
+        if (Array.isArray(catRes.data)) {
+          catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+        }
+      } catch (e) { /* categories endpoint not available */ }
+
       const res = await api.get('/products');
       const products = res.data;
-      // Extract unique category names
+      // Extract unique category entries
       const catMap = new Map();
       products.forEach((p) => {
         if (p.category) {
-          const name = getCategoryName(p.category);
           const id = typeof p.category === 'object' ? p.category._id : p.category;
+          const name = getCategoryName(p.category, catLookup);
           catMap.set(id, name);
         }
       });
@@ -51,6 +64,7 @@ class Products extends Component {
         products,
         filteredProducts: products,
         categories,
+        catLookup,
         loading: false,
       });
     } catch (err) {
@@ -97,7 +111,7 @@ class Products extends Component {
   };
 
   render() {
-    const { filteredProducts, categories, selectedCategory, sortBy, loading } = this.state;
+    const { filteredProducts, categories, catLookup, selectedCategory, sortBy, loading } = this.state;
 
     return (
       <div className="products-page">
@@ -160,7 +174,7 @@ class Products extends Component {
                     </div>
                   </div>
                   <div className="product-card-info">
-                    <span className="product-card-category">{getCategoryName(product.category)}</span>
+                    <span className="product-card-category">{getCategoryName(product.category, catLookup)}</span>
                     <h3 className="product-card-name">{product.name}</h3>
                     <p className="product-card-price">{formatPrice(product.price)}</p>
                   </div>

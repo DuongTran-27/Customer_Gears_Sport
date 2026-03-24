@@ -60,27 +60,36 @@ class Checkout extends Component {
       return;
     }
 
+    const userId = this.props.userId || localStorage.getItem('_id');
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      this.setState({ error: 'Vui lòng đăng nhập lại để đặt hàng' });
+      return;
+    }
+
     this.setState({ loading: true, error: '' });
 
-    const userId = this.props.userId || localStorage.getItem('_id');
     const token = localStorage.getItem('token');
 
     try {
       const orderData = {
         userId: userId,
-        customer: userId,
-        products: cartItems.map((item) => ({
+        items: cartItems.map((item) => ({
           productId: item._id,
-          product: item._id,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
           size: item.size || '',
+          image: item.image || item.images?.[0] || '',
         })),
-        shippingInfo,
-        shipping: shippingInfo,
+        shippingInfo: {
+          fullName: shippingInfo.fullName,
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          phone: shippingInfo.phone,
+        },
         totalAmount: this.getSubtotal(),
-        total: this.getSubtotal(),
+        paymentMethod: 'COD',
+        status: 'Pending',
       };
 
       const res = await api.post('/orders', orderData, {
@@ -96,6 +105,7 @@ class Checkout extends Component {
       });
     } catch (err) {
       console.error('Order error:', err);
+      console.error('Order error response:', err.response?.data);
       this.setState({
         error: err.response?.data?.message || err.response?.data?.msg || 'Đặt hàng thất bại. Vui lòng thử lại.',
         loading: false,

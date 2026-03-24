@@ -8,10 +8,13 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('vi-VN') + 'đ';
 };
 
-// Helper to get category name
-const getCategoryName = (category) => {
+// Helper to get category name using a lookup map
+const getCategoryName = (category, catLookup) => {
   if (!category) return 'Gear';
   if (typeof category === 'object' && category.name) return category.name;
+  if (typeof category === 'string' && catLookup && catLookup.has(category)) {
+    return catLookup.get(category);
+  }
   if (typeof category === 'string' && category.length < 30) return category;
   return 'Gear';
 };
@@ -21,6 +24,7 @@ class Search extends Component {
     super(props);
     this.state = {
       results: [],
+      catLookup: new Map(),
       loading: true,
       keyword: '',
     };
@@ -46,9 +50,18 @@ class Search extends Component {
     const keyword = this.getKeyword();
     this.setState({ loading: true, keyword });
 
+    // Fetch categories for ID→name lookup
+    let catLookup = new Map();
+    try {
+      const catRes = await api.get('/categories');
+      if (Array.isArray(catRes.data)) {
+        catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+      }
+    } catch (e) { /* categories endpoint not available */ }
+
     try {
       const res = await api.get(`/products/search/${keyword}`);
-      this.setState({ results: res.data, loading: false });
+      this.setState({ results: res.data, catLookup, loading: false });
     } catch (err) {
       console.error('Search failed', err);
       // Fallback: search from all products
@@ -60,7 +73,7 @@ class Search extends Component {
             (p.category && typeof p.category === 'string' && p.category.toLowerCase().includes(keyword.toLowerCase())) ||
             (p.category && typeof p.category === 'object' && p.category.name && p.category.name.toLowerCase().includes(keyword.toLowerCase()))
         );
-        this.setState({ results: filtered, loading: false });
+        this.setState({ results: filtered, catLookup, loading: false });
       } catch (e) {
         this.setState({ results: [], loading: false });
       }
@@ -68,7 +81,7 @@ class Search extends Component {
   };
 
   render() {
-    const { results, loading, keyword } = this.state;
+    const { results, catLookup, loading, keyword } = this.state;
 
     return (
       <div className="products-page">
@@ -108,7 +121,7 @@ class Search extends Component {
                     </div>
                   </div>
                   <div className="product-card-info">
-                    <span className="product-card-category">{getCategoryName(product.category)}</span>
+                    <span className="product-card-category">{getCategoryName(product.category, catLookup)}</span>
                     <h3 className="product-card-name">{product.name}</h3>
                     <p className="product-card-price">{formatPrice(product.price)}</p>
                   </div>

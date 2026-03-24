@@ -8,10 +8,13 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('vi-VN') + 'đ';
 };
 
-// Helper to get category name
-const getCategoryName = (category) => {
+// Helper to get category name using a lookup map
+const getCategoryName = (category, catLookup) => {
   if (!category) return 'Gear';
   if (typeof category === 'object' && category.name) return category.name;
+  if (typeof category === 'string' && catLookup && catLookup.has(category)) {
+    return catLookup.get(category);
+  }
   if (typeof category === 'string' && category.length < 30) return category;
   return 'Gear';
 };
@@ -21,6 +24,7 @@ class Home extends Component {
     super(props);
     this.state = {
       featuredProducts: [],
+      catLookup: new Map(),
       loading: true,
     };
   }
@@ -31,8 +35,17 @@ class Home extends Component {
 
   fetchProducts = async () => {
     try {
+      // Fetch categories for ID→name lookup
+      let catLookup = new Map();
+      try {
+        const catRes = await api.get('/categories');
+        if (Array.isArray(catRes.data)) {
+          catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+        }
+      } catch (e) { /* categories endpoint not available */ }
+
       const res = await api.get('/products');
-      this.setState({ featuredProducts: res.data.slice(0, 8), loading: false });
+      this.setState({ featuredProducts: res.data.slice(0, 8), catLookup, loading: false });
     } catch (err) {
       console.error('Failed to fetch products', err);
       this.setState({ loading: false });
@@ -40,7 +53,7 @@ class Home extends Component {
   };
 
   render() {
-    const { featuredProducts, loading } = this.state;
+    const { featuredProducts, catLookup, loading } = this.state;
 
     return (
       <div className="home-page">
@@ -116,7 +129,7 @@ class Home extends Component {
                       />
                     </div>
                     <div className="product-card-info">
-                      <span className="product-card-category">{getCategoryName(product.category)}</span>
+                      <span className="product-card-category">{getCategoryName(product.category, catLookup)}</span>
                       <h3 className="product-card-name">{product.name}</h3>
                       <p className="product-card-price">{formatPrice(product.price)}</p>
                     </div>

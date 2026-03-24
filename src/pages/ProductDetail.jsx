@@ -8,10 +8,13 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('vi-VN') + 'đ';
 };
 
-// Helper to get category name
-const getCategoryName = (category) => {
+// Helper to get category name using a lookup map
+const getCategoryName = (category, catLookup) => {
   if (!category) return 'Gear';
   if (typeof category === 'object' && category.name) return category.name;
+  if (typeof category === 'string' && catLookup && catLookup.has(category)) {
+    return catLookup.get(category);
+  }
   if (typeof category === 'string' && category.length < 30) return category;
   return 'Gear';
 };
@@ -23,6 +26,7 @@ class ProductDetail extends Component {
       product: null,
       selectedSize: '',
       quantity: 1,
+      catLookup: new Map(),
       loading: true,
       addedToCart: false,
       addedToWishlist: false,
@@ -41,15 +45,24 @@ class ProductDetail extends Component {
 
   fetchProduct = async () => {
     const id = this.getProductId();
+    // Fetch categories for ID→name lookup
+    let catLookup = new Map();
+    try {
+      const catRes = await api.get('/categories');
+      if (Array.isArray(catRes.data)) {
+        catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+      }
+    } catch (e) { /* categories endpoint not available */ }
+
     try {
       const res = await api.get(`/products/${id}`);
-      this.setState({ product: res.data, loading: false });
+      this.setState({ product: res.data, catLookup, loading: false });
     } catch (err) {
       // Try fetching all products and finding by ID
       try {
         const res = await api.get('/products');
         const product = res.data.find((p) => p._id === id);
-        this.setState({ product: product || null, loading: false });
+        this.setState({ product: product || null, catLookup, loading: false });
       } catch (e) {
         console.error('Failed to fetch product', e);
         this.setState({ loading: false });
@@ -117,7 +130,7 @@ class ProductDetail extends Component {
   };
 
   render() {
-    const { product, quantity, loading, addedToCart, addedToWishlist, activeTab } = this.state;
+    const { product, quantity, catLookup, loading, addedToCart, addedToWishlist, activeTab } = this.state;
     const { isLoggedIn } = this.props;
 
     if (loading) {
@@ -139,7 +152,7 @@ class ProductDetail extends Component {
       );
     }
 
-    const categoryName = getCategoryName(product.category);
+    const categoryName = getCategoryName(product.category, catLookup);
 
     return (
       <div className="product-detail-page">

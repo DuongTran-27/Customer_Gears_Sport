@@ -31,11 +31,11 @@ class Active extends Component {
     try {
       // Try POST first, then GET as fallback
       try {
-        await api.post('/active', { _id, token });
+        await api.post('/active', { id: _id, token });
       } catch (postErr) {
         // If POST fails, try as GET with query params
         if (postErr.response?.status === 404 || postErr.response?.status === 405) {
-          await api.get(`/active?_id=${_id}&token=${token}`);
+          await api.get(`/active?id=${_id}&token=${token}`);
         } else {
           throw postErr;
         }

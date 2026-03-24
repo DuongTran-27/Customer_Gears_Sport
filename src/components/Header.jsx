@@ -19,23 +19,25 @@ class Header extends Component {
 
   fetchCategories = async () => {
     try {
+      // Try dedicated categories endpoint first
+      const catRes = await api.get('/categories');
+      const catList = catRes.data;
+      if (Array.isArray(catList) && catList.length > 0) {
+        const cats = catList.slice(0, 5).map((c) => [c._id, c.name]);
+        this.setState({ categories: cats });
+        return;
+      }
+    } catch (e) {
+      // Fallback: extract from products
+    }
+    try {
       const res = await api.get('/products');
       const products = res.data;
-      // Extract unique categories with their names
       const catMap = new Map();
       products.forEach((p) => {
         if (p.category) {
           if (typeof p.category === 'object' && p.category.name) {
-            // Category is populated object with name
             catMap.set(p.category._id, p.category.name);
-          } else if (typeof p.category === 'string') {
-            // Category is a string ID - try to find name from product's categoryName or use ID
-            const catName = p.categoryName || p.category_name || null;
-            if (catName) {
-              catMap.set(p.category, catName);
-            } else {
-              catMap.set(p.category, p.category);
-            }
           }
         }
       });
@@ -61,16 +63,20 @@ class Header extends Component {
     this.setState((prev) => ({ mobileMenuOpen: !prev.mobileMenuOpen }));
   };
 
+  componentDidUpdate() {
+    // Reset redirect flag after navigation
+    if (this.state.redirectToSearch) {
+      this.setState({ redirectToSearch: false });
+    }
+  }
+
   render() {
-    const { isLoggedIn, showActivePage, currentPath } = this.props;
+    const { isLoggedIn, showActivePage } = this.props;
     const { searchKeyword, categories, mobileMenuOpen, redirectToSearch } = this.state;
 
     if (redirectToSearch) {
-      this.setState({ redirectToSearch: false });
       return <Navigate to={`/search/${searchKeyword}`} />;
     }
-
-    const isHomePage = currentPath === '/';
 
     return (
       <header className="header">
@@ -118,22 +124,20 @@ class Header extends Component {
 
             {/* Right Side */}
             <div className="header-actions">
-              {/* Search - only on home page */}
-              {isHomePage && (
-                <form className="header-search" onSubmit={this.handleSearchSubmit}>
-                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm"
-                    value={searchKeyword}
-                    onChange={this.handleSearchChange}
-                    className="search-input"
-                  />
-                </form>
-              )}
+              {/* Search */}
+              <form className="header-search" onSubmit={this.handleSearchSubmit}>
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm"
+                  value={searchKeyword}
+                  onChange={this.handleSearchChange}
+                  className="search-input"
+                />
+              </form>
 
               {/* Auth Links */}
               {!isLoggedIn ? (

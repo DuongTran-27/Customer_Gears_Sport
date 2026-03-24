@@ -8,10 +8,13 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString('vi-VN') + 'đ';
 };
 
-// Helper to get category name
-const getCategoryName = (category) => {
+// Helper to get category name using a lookup map
+const getCategoryName = (category, catLookup) => {
   if (!category) return 'Gear';
   if (typeof category === 'object' && category.name) return category.name;
+  if (typeof category === 'string' && catLookup && catLookup.has(category)) {
+    return catLookup.get(category);
+  }
   if (typeof category === 'string' && category.length < 30) return category;
   return 'Gear';
 };
@@ -22,20 +25,26 @@ class CategoryProducts extends Component {
     this.state = {
       products: [],
       categoryName: '',
+      catLookup: new Map(),
       loading: true,
     };
   }
 
   componentDidMount() {
     this.fetchCategoryProducts();
+    // Poll for URL changes since class components don't get React Router params
+    this._lastCategoryId = this.getCategoryId();
+    this._pathInterval = setInterval(() => {
+      const currentId = this.getCategoryId();
+      if (currentId !== this._lastCategoryId) {
+        this._lastCategoryId = currentId;
+        this.fetchCategoryProducts();
+      }
+    }, 200);
   }
 
-  componentDidUpdate(prevProps) {
-    const prevId = this.getCategoryId(prevProps);
-    const currentId = this.getCategoryId(this.props);
-    if (prevId !== currentId) {
-      this.fetchCategoryProducts();
-    }
+  componentWillUnmount() {
+    if (this._pathInterval) clearInterval(this._pathInterval);
   }
 
   getCategoryId = () => {
@@ -48,6 +57,15 @@ class CategoryProducts extends Component {
     this.setState({ loading: true });
 
     try {
+      // Fetch categories for ID→name lookup
+      let catLookup = new Map();
+      try {
+        const catRes = await api.get('/categories');
+        if (Array.isArray(catRes.data)) {
+          catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+        }
+      } catch (e) { /* categories endpoint not available */ }
+
       const res = await api.get('/products');
       const products = res.data.filter((p) => {
         if (!p.category) return false;
@@ -57,11 +75,11 @@ class CategoryProducts extends Component {
         return p.category === categoryId || p.category.toLowerCase() === categoryId.toLowerCase();
       });
       // Get category display name
-      let catName = categoryId;
+      let catName = catLookup.get(categoryId) || categoryId;
       if (products.length > 0) {
-        catName = getCategoryName(products[0].category);
+        catName = getCategoryName(products[0].category, catLookup);
       }
-      this.setState({ products, categoryName: catName, loading: false });
+      this.setState({ products, categoryName: catName, catLookup, loading: false });
     } catch (err) {
       console.error('Failed to fetch products', err);
       this.setState({ loading: false });
@@ -69,7 +87,7 @@ class CategoryProducts extends Component {
   };
 
   render() {
-    const { products, categoryName, loading } = this.state;
+    const { products, categoryName, catLookup, loading } = this.state;
 
     return (
       <div className="products-page">
@@ -106,7 +124,7 @@ class CategoryProducts extends Component {
                     </div>
                   </div>
                   <div className="product-card-info">
-                    <span className="product-card-category">{getCategoryName(product.category)}</span>
+                    <span className="product-card-category">{getCategoryName(product.category, catLookup)}</span>
                     <h3 className="product-card-name">{product.name}</h3>
                     <p className="product-card-price">{formatPrice(product.price)}</p>
                   </div>
