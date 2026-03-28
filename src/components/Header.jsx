@@ -105,6 +105,14 @@ class Header extends Component {
               </svg>
             </Link>
 
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && (
+              <div
+                className="mobile-menu-overlay"
+                onClick={() => this.setState({ mobileMenuOpen: false })}
+              />
+            )}
+
             {/* Navigation - No Home link */}
             <nav className={`header-nav ${mobileMenuOpen ? 'open' : ''}`}>
               <Link to="/products" className="nav-link" onClick={() => this.setState({ mobileMenuOpen: false })}>
