@@ -38,13 +38,13 @@ class ProductDetail extends Component {
     this.fetchProduct();
   }
 
-  getProductId = () => {
+  getProductSlug = () => {
     const path = window.location.pathname;
     return path.split('/product/')[1] || '';
   };
 
   fetchProduct = async () => {
-    const id = this.getProductId();
+    const slug = this.getProductSlug();
     // Fetch categories for ID→name lookup
     let catLookup = new Map();
     try {
@@ -55,13 +55,13 @@ class ProductDetail extends Component {
     } catch (e) { /* categories endpoint not available */ }
 
     try {
-      const res = await api.get(`/products/${id}`);
+      const res = await api.get(`/products/${slug}`);
       this.setState({ product: res.data, catLookup, loading: false });
     } catch (err) {
-      // Try fetching all products and finding by ID
+      // Try fetching all products and finding by Slug or ID
       try {
         const res = await api.get('/products');
-        const product = res.data.find((p) => p._id === id);
+        const product = res.data.find((p) => p.slug === slug || p._id === slug);
         this.setState({ product: product || null, catLookup, loading: false });
       } catch (e) {
         console.error('Failed to fetch product', e);

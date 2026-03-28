@@ -118,7 +118,7 @@ class Home extends Component {
               <div className="product-grid">
                 {featuredProducts.map((product) => (
                   <Link
-                    to={`/product/${product._id}`}
+                    to={`/product/${product.slug || product._id}`}
                     key={product._id}
                     className="product-card"
                   >

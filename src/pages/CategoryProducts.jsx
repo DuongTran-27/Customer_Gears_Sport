@@ -33,11 +33,11 @@ class CategoryProducts extends Component {
   componentDidMount() {
     this.fetchCategoryProducts();
     // Poll for URL changes since class components don't get React Router params
-    this._lastCategoryId = this.getCategoryId();
+    this._lastCategorySlug = this.getCategorySlug();
     this._pathInterval = setInterval(() => {
-      const currentId = this.getCategoryId();
-      if (currentId !== this._lastCategoryId) {
-        this._lastCategoryId = currentId;
+      const currentSlug = this.getCategorySlug();
+      if (currentSlug !== this._lastCategorySlug) {
+        this._lastCategorySlug = currentSlug;
         this.fetchCategoryProducts();
       }
     }, 200);
@@ -47,22 +47,31 @@ class CategoryProducts extends Component {
     if (this._pathInterval) clearInterval(this._pathInterval);
   }
 
-  getCategoryId = () => {
+  getCategorySlug = () => {
     const path = window.location.pathname;
     return decodeURIComponent(path.split('/category/')[1] || '');
   };
 
   fetchCategoryProducts = async () => {
-    const categoryId = this.getCategoryId();
+    const categorySlug = this.getCategorySlug();
     this.setState({ loading: true });
 
     try {
       // Fetch categories for ID→name lookup
       let catLookup = new Map();
+      let matchedCategoryName = categorySlug;
+      let matchedCategoryId = categorySlug;
+
       try {
         const catRes = await api.get('/categories');
         if (Array.isArray(catRes.data)) {
-          catRes.data.forEach((c) => catLookup.set(c._id, c.name));
+          catRes.data.forEach((c) => {
+            catLookup.set(c._id, c.name);
+            if (c.slug === categorySlug || c._id === categorySlug) {
+              matchedCategoryName = c.name;
+              matchedCategoryId = c._id;
+            }
+          });
         }
       } catch (e) { /* categories endpoint not available */ }
 
@@ -70,12 +79,12 @@ class CategoryProducts extends Component {
       const products = res.data.filter((p) => {
         if (!p.category) return false;
         if (typeof p.category === 'object') {
-          return p.category._id === categoryId || p.category.name === categoryId;
+          return p.category.slug === categorySlug || p.category._id === matchedCategoryId || p.category.name === categorySlug;
         }
-        return p.category === categoryId || p.category.toLowerCase() === categoryId.toLowerCase();
+        return p.category === matchedCategoryId || p.category.toLowerCase() === categorySlug.toLowerCase();
       });
       // Get category display name
-      let catName = catLookup.get(categoryId) || categoryId;
+      let catName = matchedCategoryName;
       if (products.length > 0) {
         catName = getCategoryName(products[0].category, catLookup);
       }
@@ -110,7 +119,7 @@ class CategoryProducts extends Component {
             <div className="product-grid">
               {products.map((product) => (
                 <Link
-                  to={`/product/${product._id}`}
+                  to={`/product/${product.slug}`}
                   key={product._id}
                   className="product-card"
                 >

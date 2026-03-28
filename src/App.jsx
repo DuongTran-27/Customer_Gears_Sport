@@ -94,9 +94,9 @@ class App extends Component {
               }
             />
             <Route path="/products" element={<Products />} />
-            <Route path="/category/:categoryId" element={<CategoryProducts />} />
+            <Route path="/category/:slug" element={<CategoryProducts />} />
             <Route
-              path="/product/:id"
+              path="/product/:slug"
               element={<ProductDetail isLoggedIn={isLoggedIn} />}
             />
             <Route

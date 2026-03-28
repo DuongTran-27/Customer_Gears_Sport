@@ -75,14 +75,14 @@ class Wishlist extends Component {
             <div className="wishlist-list">
               {wishlistItems.map((item) => (
                 <div key={item._id} className="wishlist-item">
-                  <Link to={`/product/${item._id}`} className="wishlist-item-image">
+                  <Link to={`/product/${item.slug || item._id}`} className="wishlist-item-image">
                     <img
                       src={item.image || 'https://via.placeholder.com/120x120?text=Product'}
                       alt={item.name}
                     />
                   </Link>
                   <div className="wishlist-item-details">
-                    <Link to={`/product/${item._id}`} className="wishlist-item-name">
+                    <Link to={`/product/${item.slug || item._id}`} className="wishlist-item-name">
                       {item.name}
                     </Link>
                     <span className="wishlist-item-category">{getCategoryName(item.category)}</span>

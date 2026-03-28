@@ -23,7 +23,7 @@ class Header extends Component {
       const catRes = await api.get('/categories');
       const catList = catRes.data;
       if (Array.isArray(catList) && catList.length > 0) {
-        const cats = catList.slice(0, 5).map((c) => [c._id, c.name]);
+        const cats = catList.slice(0, 5).map((c) => [c.slug || c._id, c.name]);
         this.setState({ categories: cats });
         return;
       }
@@ -37,7 +37,7 @@ class Header extends Component {
       products.forEach((p) => {
         if (p.category) {
           if (typeof p.category === 'object' && p.category.name) {
-            catMap.set(p.category._id, p.category.name);
+            catMap.set(p.category.slug || p.category._id, p.category.name);
           }
         }
       });

@@ -107,7 +107,7 @@ class Search extends Component {
             <div className="product-grid">
               {results.map((product) => (
                 <Link
-                  to={`/product/${product._id}`}
+                  to={`/product/${product.slug || product._id}`}
                   key={product._id}
                   className="product-card"
                 >
