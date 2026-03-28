@@ -4,8 +4,8 @@ import api from '../utils/api';
 
 // Helper to format VND currency
 const formatPrice = (price) => {
-  if (!price && price !== 0) return 'Liên hệ';
-  return Number(price).toLocaleString('vi-VN') + 'đ';
+  if (!price && price !== 0) return 'Contact';
+  return Number(price).toLocaleString('en-US') + '₫';
 };
 
 class Checkout extends Component {
@@ -29,7 +29,31 @@ class Checkout extends Component {
   componentDidMount() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     this.setState({ cartItems: cart });
+    this.loadProfileAddress();
   }
+
+  loadProfileAddress = async () => {
+    const userId = this.props.userId || localStorage.getItem('_id');
+    if (!userId || userId === 'undefined' || userId === 'null') return;
+    try {
+      const res = await api.get(`/user/${userId}`);
+      const user = res.data.data || res.data;
+      if (user) {
+        const addr = user.address || {};
+        const addressParts = [addr.street, addr.ward, addr.district].filter(Boolean).join(', ');
+        this.setState({
+          shippingInfo: {
+            fullName: user.full_name || user.fullName || user.name || '',
+            address: addressParts,
+            city: addr.city || '',
+            phone: user.phone || user.phoneNumber || '',
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Could not load address from profile:', err);
+    }
+  };
 
   handleChange = (e) => {
     this.setState({
@@ -51,18 +75,18 @@ class Checkout extends Component {
     const { cartItems, shippingInfo } = this.state;
 
     if (!shippingInfo.fullName || !shippingInfo.address || !shippingInfo.city || !shippingInfo.phone) {
-      this.setState({ error: 'Vui lòng điền đầy đủ thông tin giao hàng' });
+      this.setState({ error: 'Please fill in all shipping information' });
       return;
     }
 
     if (cartItems.length === 0) {
-      this.setState({ error: 'Giỏ hàng của bạn đang trống' });
+      this.setState({ error: 'Your cart is empty' });
       return;
     }
 
     const userId = this.props.userId || localStorage.getItem('_id');
     if (!userId || userId === 'undefined' || userId === 'null') {
-      this.setState({ error: 'Vui lòng đăng nhập lại để đặt hàng' });
+      this.setState({ error: 'Please log in again to place an order' });
       return;
     }
 
@@ -103,11 +127,24 @@ class Checkout extends Component {
         orderId: res.data._id || res.data.orderId || res.data.order?._id || 'N/A',
         loading: false,
       });
+
+      // Sync shipping address back to profile
+      try {
+        await api.put(`/user/${userId}`, {
+          phone: shippingInfo.phone,
+          address: {
+            street: shippingInfo.address,
+            city: shippingInfo.city,
+          },
+        });
+      } catch (syncErr) {
+        console.error('Could not sync address to profile:', syncErr);
+      }
     } catch (err) {
       console.error('Order error:', err);
       console.error('Order error response:', err.response?.data);
       this.setState({
-        error: err.response?.data?.message || err.response?.data?.msg || 'Đặt hàng thất bại. Vui lòng thử lại.',
+        error: err.response?.data?.message || err.response?.data?.msg || 'Order failed. Please try again.',
         loading: false,
       });
     }
@@ -125,11 +162,11 @@ class Checkout extends Component {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1>Đặt hàng thành công!</h1>
-            <p>Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được tạo thành công.</p>
-            <p className="order-id">Mã đơn hàng: <strong>{orderId}</strong></p>
+            <h1>Order Placed Successfully!</h1>
+            <p>Thank you for your purchase. Your order has been created.</p>
+            <p className="order-id">Order ID: <strong>{orderId}</strong></p>
             <div className="success-actions">
-              <Link to="/" className="btn btn-primary">Tiếp tục mua sắm</Link>
+              <Link to="/" className="btn btn-primary">Continue Shopping</Link>
             </div>
           </div>
         </div>
@@ -139,61 +176,61 @@ class Checkout extends Component {
     return (
       <div className="checkout-page">
         <div className="checkout-container">
-          <h1 className="checkout-title">Thanh toán</h1>
+          <h1 className="checkout-title">Checkout</h1>
 
           {error && <div className="auth-error">{error}</div>}
 
           <div className="checkout-layout">
             {/* Shipping Form */}
             <div className="checkout-form-section">
-              <h2>Thông tin giao hàng</h2>
+              <h2>Shipping Information</h2>
               <form className="auth-form" onSubmit={this.handleSubmit}>
                 <div className="form-group">
-                  <label className="form-label">Họ và tên</label>
+                  <label className="form-label">Full Name</label>
                   <input
                     type="text"
                     name="fullName"
                     value={shippingInfo.fullName}
                     onChange={this.handleChange}
                     className="form-input"
-                    placeholder="Nhập họ và tên"
+                    placeholder="Enter full name"
                     id="checkout-fullname"
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Địa chỉ</label>
+                  <label className="form-label">Address</label>
                   <input
                     type="text"
                     name="address"
                     value={shippingInfo.address}
                     onChange={this.handleChange}
                     className="form-input"
-                    placeholder="Nhập địa chỉ"
+                    placeholder="Enter address"
                     id="checkout-address"
                   />
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Thành phố</label>
+                    <label className="form-label">City</label>
                     <input
                       type="text"
                       name="city"
                       value={shippingInfo.city}
                       onChange={this.handleChange}
                       className="form-input"
-                      placeholder="Thành phố"
+                      placeholder="City"
                       id="checkout-city"
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Số điện thoại</label>
+                    <label className="form-label">Phone Number</label>
                     <input
                       type="tel"
                       name="phone"
                       value={shippingInfo.phone}
                       onChange={this.handleChange}
                       className="form-input"
-                      placeholder="Số điện thoại"
+                      placeholder="Phone number"
                       id="checkout-phone"
                     />
                   </div>
@@ -203,14 +240,14 @@ class Checkout extends Component {
                   className="btn btn-primary btn-full"
                   disabled={loading}
                 >
-                  {loading ? 'Đang đặt hàng...' : `Đặt hàng — ${formatPrice(this.getSubtotal())}`}
+                  {loading ? 'Placing order...' : `Place Order — ${formatPrice(this.getSubtotal())}`}
                 </button>
               </form>
             </div>
 
             {/* Order Summary */}
             <div className="checkout-summary">
-              <h2>Đơn hàng</h2>
+              <h2>Order Summary</h2>
               <div className="checkout-items">
                 {cartItems.map((item, index) => (
                   <div key={index} className="checkout-item">
@@ -233,16 +270,16 @@ class Checkout extends Component {
               </div>
               <div className="summary-divider"></div>
               <div className="summary-row">
-                <span>Tạm tính</span>
+                <span>Subtotal</span>
                 <span>{formatPrice(this.getSubtotal())}</span>
               </div>
               <div className="summary-row">
-                <span>Phí vận chuyển</span>
-                <span>{this.getSubtotal() > 500000 ? 'Miễn phí' : formatPrice(30000)}</span>
+                <span>Shipping</span>
+                <span>{this.getSubtotal() > 500000 ? 'Free' : formatPrice(30000)}</span>
               </div>
               <div className="summary-divider"></div>
               <div className="summary-row summary-total">
-                <span>Tổng cộng</span>
+                <span>Total</span>
                 <span>
                   {formatPrice(this.getSubtotal() + (this.getSubtotal() > 500000 ? 0 : 30000))}
                 </span>

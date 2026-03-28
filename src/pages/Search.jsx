@@ -4,8 +4,8 @@ import api from '../utils/api';
 
 // Helper to format VND currency
 const formatPrice = (price) => {
-  if (!price && price !== 0) return 'Liên hệ';
-  return Number(price).toLocaleString('vi-VN') + 'đ';
+  if (!price && price !== 0) return 'Contact';
+  return Number(price).toLocaleString('en-US') + '₫';
 };
 
 // Helper to get category name using a lookup map
@@ -88,9 +88,9 @@ class Search extends Component {
         <div className="products-container">
           <div className="products-header">
             <h1 className="products-title">
-              Kết quả tìm kiếm cho "<span className="highlight">{keyword}</span>"
+              Search results for "<span className="highlight">{keyword}</span>"
             </h1>
-            <p className="products-count">{results.length} kết quả</p>
+            <p className="products-count">{results.length} results</p>
           </div>
 
           {loading ? (
@@ -99,9 +99,9 @@ class Search extends Component {
             </div>
           ) : results.length === 0 ? (
             <div className="empty-state">
-              <h3>Không tìm thấy kết quả</h3>
-              <p>Thử tìm kiếm với từ khóa khác</p>
-              <Link to="/products" className="btn btn-primary">Xem tất cả sản phẩm</Link>
+              <h3>No results found</h3>
+              <p>Try searching with different keywords</p>
+              <Link to="/products" className="btn btn-primary">View All Products</Link>
             </div>
           ) : (
             <div className="product-grid">
@@ -117,7 +117,7 @@ class Search extends Component {
                       alt={product.name}
                     />
                     <div className="product-card-hover">
-                      <span>Xem sản phẩm</span>
+                      <span>View Product</span>
                     </div>
                   </div>
                   <div className="product-card-info">

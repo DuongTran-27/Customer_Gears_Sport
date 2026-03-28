@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 
 // Helper to format VND currency
 const formatPrice = (price) => {
-  if (!price && price !== 0) return 'Liên hệ';
-  return Number(price).toLocaleString('vi-VN') + 'đ';
+  if (!price && price !== 0) return 'Contact';
+  return Number(price).toLocaleString('en-US') + '₫';
 };
 
 // Helper to get category name
@@ -59,17 +59,17 @@ class Wishlist extends Component {
     return (
       <div className="wishlist-page">
         <div className="wishlist-container">
-          <h1 className="wishlist-title">Yêu thích</h1>
-          <p className="wishlist-count">{wishlistItems.length} sản phẩm</p>
+          <h1 className="wishlist-title">Wishlist</h1>
+          <p className="wishlist-count">{wishlistItems.length} items</p>
 
           {wishlistItems.length === 0 ? (
             <div className="empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="empty-icon">
                 <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
               </svg>
-              <h3>Danh sách yêu thích trống</h3>
-              <p>Lưu lại những sản phẩm bạn yêu thích để mua sau.</p>
-              <Link to="/products" className="btn btn-primary">Khám phá sản phẩm</Link>
+              <h3>Your wishlist is empty</h3>
+              <p>Save the products you love to buy later.</p>
+              <Link to="/products" className="btn btn-primary">Explore Products</Link>
             </div>
           ) : (
             <div className="wishlist-list">
@@ -93,13 +93,13 @@ class Wishlist extends Component {
                       className="btn btn-primary btn-small"
                       onClick={() => this.addToCart(item)}
                     >
-                      Thêm vào giỏ
+                      Add to Cart
                     </button>
                     <button
                       className="btn btn-outline btn-small"
                       onClick={() => this.removeItem(item._id)}
                     >
-                      Xóa
+                      Remove
                     </button>
                   </div>
                 </div>

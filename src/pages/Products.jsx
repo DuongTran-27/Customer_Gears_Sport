@@ -4,8 +4,8 @@ import api from '../utils/api';
 
 // Helper to format VND currency
 const formatPrice = (price) => {
-  if (!price && price !== 0) return 'Liên hệ';
-  return Number(price).toLocaleString('vi-VN') + 'đ';
+  if (!price && price !== 0) return 'Contact';
+  return Number(price).toLocaleString('en-US') + '₫';
 };
 
 // Helper to get category name using a lookup map
@@ -118,14 +118,14 @@ class Products extends Component {
         <div className="products-container">
           {/* Page Header */}
           <div className="products-header">
-            <h1 className="products-title">Tất cả sản phẩm</h1>
+            <h1 className="products-title">All Products</h1>
             <div className="products-controls">
               <div className="filter-chips">
                 <button
                   className={`filter-chip ${selectedCategory === 'all' ? 'active' : ''}`}
                   onClick={() => this.handleCategoryFilter('all')}
                 >
-                  Tất cả
+                  All
                 </button>
                 {categories.map(([catId, catName]) => (
                   <button
@@ -138,10 +138,10 @@ class Products extends Component {
                 ))}
               </div>
               <select className="sort-select" value={sortBy} onChange={this.handleSort}>
-                <option value="default">Sắp xếp</option>
-                <option value="price-low">Giá: Thấp đến Cao</option>
-                <option value="price-high">Giá: Cao đến Thấp</option>
-                <option value="name">Tên: A-Z</option>
+                <option value="default">Sort by</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name: A-Z</option>
               </select>
             </div>
           </div>
@@ -153,8 +153,8 @@ class Products extends Component {
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="empty-state">
-              <h3>Không tìm thấy sản phẩm</h3>
-              <p>Thử thay đổi bộ lọc</p>
+              <h3>No products found</h3>
+              <p>Try changing the filters</p>
             </div>
           ) : (
             <div className="product-grid">
@@ -170,7 +170,7 @@ class Products extends Component {
                       alt={product.name}
                     />
                     <div className="product-card-hover">
-                      <span>Xem sản phẩm</span>
+                      <span>View Product</span>
                     </div>
                   </div>
                   <div className="product-card-info">

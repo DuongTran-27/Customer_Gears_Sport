@@ -15,6 +15,7 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Search from './pages/Search';
+import ScrollToTop from './components/ScrollToTop';
 
 class App extends Component {
   constructor(props) {
@@ -67,6 +68,7 @@ class App extends Component {
 
     return (
       <div className="app">
+        <ScrollToTop />
         <Header
           isLoggedIn={isLoggedIn}
           showActivePage={showActivePage}

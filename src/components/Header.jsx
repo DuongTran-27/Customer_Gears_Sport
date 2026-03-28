@@ -10,12 +10,42 @@ class Header extends Component {
       categories: [],
       mobileMenuOpen: false,
       redirectToSearch: false,
+      cartCount: this.getCartCount(),
     };
   }
 
   componentDidMount() {
     this.fetchCategories();
+    // Listen for cart changes from other tabs
+    window.addEventListener('storage', this.onStorageChange);
+    // Poll localStorage for cart changes within same tab
+    this._cartInterval = setInterval(() => {
+      const count = this.getCartCount();
+      if (count !== this.state.cartCount) {
+        this.setState({ cartCount: count });
+      }
+    }, 500);
   }
+
+  componentWillUnmount() {
+    window.removeEventListener('storage', this.onStorageChange);
+    if (this._cartInterval) clearInterval(this._cartInterval);
+  }
+
+  onStorageChange = (e) => {
+    if (e.key === 'cart') {
+      this.setState({ cartCount: this.getCartCount() });
+    }
+  };
+
+  getCartCount = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      return cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    } catch {
+      return 0;
+    }
+  };
 
   fetchCategories = async () => {
     try {
@@ -72,7 +102,7 @@ class Header extends Component {
 
   render() {
     const { isLoggedIn, showActivePage } = this.props;
-    const { searchKeyword, categories, mobileMenuOpen, redirectToSearch } = this.state;
+    const { searchKeyword, categories, mobileMenuOpen, redirectToSearch, cartCount } = this.state;
 
     if (redirectToSearch) {
       return <Navigate to={`/search/${searchKeyword}`} />;
@@ -83,11 +113,11 @@ class Header extends Component {
         {/* Top Bar */}
         <div className="header-top-bar">
           <div className="header-top-content">
-            <span>Miễn phí vận chuyển cho đơn hàng trên 500.000đ</span>
+            <span>Free shipping on orders over 500,000₫</span>
             <div className="header-top-links">
-              <Link to="/products">Tìm cửa hàng</Link>
+              <Link to="/products">Find a Store</Link>
               <span className="divider">|</span>
-              <Link to="/">Trợ giúp</Link>
+              <Link to="/">Help</Link>
             </div>
           </div>
         </div>
@@ -140,7 +170,7 @@ class Header extends Component {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Tìm kiếm"
+                  placeholder="Search"
                   value={searchKeyword}
                   onChange={this.handleSearchChange}
                   className="search-input"
@@ -155,9 +185,9 @@ class Header extends Component {
                       <path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
                     </svg>
                   </Link>
-                  <Link to="/signup" className="header-action-link signup-link">Đăng ký</Link>
+                  <Link to="/signup" className="header-action-link signup-link">Sign Up</Link>
                   {showActivePage && (
-                    <Link to="/active" className="header-action-link active-link">Kích hoạt</Link>
+                    <Link to="/active" className="header-action-link active-link">Activate</Link>
                   )}
                 </>
               ) : (
@@ -180,6 +210,9 @@ class Header extends Component {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="action-icon">
                   <path d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
+                {cartCount > 0 && (
+                  <span className="cart-badge">{cartCount > 9 ? '9+' : cartCount}</span>
+                )}
               </Link>
 
               {/* Mobile Menu Toggle */}

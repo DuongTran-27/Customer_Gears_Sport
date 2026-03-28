@@ -22,7 +22,7 @@ class Active extends Component {
     const { _id, token } = this.state;
 
     if (!_id || !token) {
-      this.setState({ error: 'Vui lòng điền đầy đủ thông tin' });
+      this.setState({ error: 'Please fill in all fields' });
       return;
     }
 
@@ -41,14 +41,14 @@ class Active extends Component {
         }
       }
       this.setState({
-        success: 'Kích hoạt tài khoản thành công! Bạn có thể đăng nhập ngay.',
+        success: 'Account activated successfully! You can now log in.',
         loading: false,
         error: '',
       });
     } catch (err) {
       console.error('Activation error:', err);
       this.setState({
-        error: err.response?.data?.message || err.response?.data?.msg || 'Kích hoạt thất bại. Vui lòng thử lại.',
+        error: err.response?.data?.message || err.response?.data?.msg || 'Activation failed. Please try again.',
         loading: false,
       });
     }
@@ -68,8 +68,8 @@ class Active extends Component {
                   fill="currentColor"
                 />
               </svg>
-              <h1>KÍCH HOẠT TÀI KHOẢN</h1>
-              <p>Nhập thông tin kích hoạt đã được gửi đến email của bạn để xác minh tài khoản.</p>
+              <h1>ACTIVATE ACCOUNT</h1>
+              <p>Enter the activation information sent to your email to verify your account.</p>
             </div>
 
             {error && <div className="auth-error">{error}</div>}
@@ -80,7 +80,7 @@ class Active extends Component {
                 <input
                   type="text"
                   name="_id"
-                  placeholder="ID của bạn"
+                  placeholder="Your ID"
                   value={_id}
                   onChange={this.handleChange}
                   className="form-input"
@@ -91,7 +91,7 @@ class Active extends Component {
                 <input
                   type="text"
                   name="token"
-                  placeholder="Mã kích hoạt (Token)"
+                  placeholder="Activation Token"
                   value={token}
                   onChange={this.handleChange}
                   className="form-input"
@@ -103,12 +103,12 @@ class Active extends Component {
                 className="btn btn-primary btn-full"
                 disabled={loading}
               >
-                {loading ? 'Đang kích hoạt...' : 'KÍCH HOẠT'}
+                {loading ? 'Activating...' : 'ACTIVATE'}
               </button>
             </form>
 
             <p className="auth-switch">
-              Đã kích hoạt? <a href="/login">Đăng nhập</a>
+                            Already activated? <a href="/login">Sign In</a>
             </p>
           </div>
         </div>

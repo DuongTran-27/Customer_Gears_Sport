@@ -4,8 +4,8 @@ import api from '../utils/api';
 
 // Helper to format VND currency
 const formatPrice = (price) => {
-  if (!price && price !== 0) return 'Liên hệ';
-  return Number(price).toLocaleString('vi-VN') + 'đ';
+  if (!price && price !== 0) return 'Contact';
+  return Number(price).toLocaleString('en-US') + '₫';
 };
 
 // Helper to get category name using a lookup map
@@ -72,7 +72,7 @@ class ProductDetail extends Component {
 
   handleAddToCart = () => {
     if (!this.props.isLoggedIn) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
+      alert('Please login to add products to cart');
       return;
     }
 
@@ -104,7 +104,7 @@ class ProductDetail extends Component {
 
   handleAddToWishlist = () => {
     if (!this.props.isLoggedIn) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích');
+      alert('Please login to add products to wishlist');
       return;
     }
 
@@ -112,7 +112,7 @@ class ProductDetail extends Component {
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
 
     if (wishlist.find((item) => item._id === product._id)) {
-      alert('Sản phẩm này đã có trong danh sách yêu thích');
+      alert('This product is already in your wishlist');
       return;
     }
 
@@ -145,8 +145,8 @@ class ProductDetail extends Component {
       return (
         <div className="page-container">
           <div className="empty-state">
-            <h3>Không tìm thấy sản phẩm</h3>
-            <Link to="/products" className="btn btn-primary">Xem sản phẩm</Link>
+            <h3>Product not found</h3>
+            <Link to="/products" className="btn btn-primary">View Products</Link>
           </div>
         </div>
       );
@@ -159,9 +159,9 @@ class ProductDetail extends Component {
         <div className="product-detail-container">
           {/* Breadcrumb */}
           <div className="breadcrumb">
-            <Link to="/">Trang chủ</Link>
+            <Link to="/">Home</Link>
             <span>/</span>
-            <Link to="/products">Sản phẩm</Link>
+            <Link to="/products">Products</Link>
             <span>/</span>
             <span>{product.name}</span>
           </div>
@@ -187,7 +187,7 @@ class ProductDetail extends Component {
 
               {/* Quantity */}
               <div className="product-quantity">
-                <label>Số lượng</label>
+                <label>Quantity</label>
                 <div className="quantity-controls">
                   <button
                     onClick={() => this.setState((s) => ({ quantity: Math.max(1, s.quantity - 1) }))}
@@ -211,19 +211,19 @@ class ProductDetail extends Component {
                   className={`btn btn-primary btn-full ${addedToCart ? 'btn-success' : ''}`}
                   onClick={this.handleAddToCart}
                 >
-                  {addedToCart ? '✓ Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                  {addedToCart ? '✓ Added to Cart' : 'Add to Cart'}
                 </button>
                 <button
                   className={`btn btn-outline btn-full ${addedToWishlist ? 'btn-success-outline' : ''}`}
                   onClick={this.handleAddToWishlist}
                 >
-                  {addedToWishlist ? '♥ Đã lưu' : '♡ Yêu thích'}
+                  {addedToWishlist ? '♥ Saved' : '♡ Wishlist'}
                 </button>
               </div>
 
               {!isLoggedIn && (
                 <p className="login-prompt">
-                  <Link to="/login">Đăng nhập</Link> để thêm sản phẩm vào giỏ hàng hoặc yêu thích
+                  <Link to="/login">Login</Link> to add products to cart or wishlist
                 </p>
               )}
 
@@ -234,37 +234,37 @@ class ProductDetail extends Component {
                     className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'description' })}
                   >
-                    Mô tả
+                    Description
                   </button>
                   <button
                     className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'details' })}
                   >
-                    Chi tiết
+                    Details
                   </button>
                   <button
                     className={`tab-btn ${activeTab === 'shipping' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'shipping' })}
                   >
-                    Vận chuyển
+                    Shipping
                   </button>
                 </div>
                 <div className="product-tab-content">
                   {activeTab === 'description' && (
-                    <p>{product.description || 'Sản phẩm chất lượng cao được thiết kế cho hiệu suất và phong cách.'}</p>
+                    <p>{product.description || 'High-quality product designed for performance and style.'}</p>
                   )}
                   {activeTab === 'details' && (
                     <ul>
-                      <li>Danh mục: {categoryName}</li>
-                      <li>Chất liệu cao cấp</li>
-                      <li>Thiết kế bền bỉ</li>
+                      <li>Category: {categoryName}</li>
+                      <li>Premium materials</li>
+                      <li>Durable design</li>
                     </ul>
                   )}
                   {activeTab === 'shipping' && (
                     <div>
-                      <p>Miễn phí vận chuyển cho đơn hàng trên 500.000đ</p>
-                      <p>Vận chuyển nhanh có sẵn khi thanh toán</p>
-                      <p>Đổi trả miễn phí trong 30 ngày</p>
+                      <p>Free shipping on orders over 500,000₫</p>
+                      <p>Express shipping available at checkout</p>
+                      <p>Free returns within 30 days</p>
                     </div>
                   )}
                 </div>
