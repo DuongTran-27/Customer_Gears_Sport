@@ -261,6 +261,7 @@ class Checkout extends Component {
                     <div className="checkout-item-info">
                       <h4>{item.name}</h4>
                       <p>{typeof item.category === 'object' ? item.category?.name : item.category}</p>
+                      {item.size && <p style={{ fontSize: '13px', color: '#707072', marginTop: '2px' }}>Size: {item.size}</p>}
                     </div>
                     <span className="checkout-item-price">
                       {formatPrice((item.price || 0) * item.quantity)}

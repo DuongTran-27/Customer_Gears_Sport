@@ -19,6 +19,21 @@ const getCategoryName = (category, catLookup) => {
   return 'Gear';
 };
 
+// Size constants
+const SHOE_SIZES = [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
+const CLOTHING_SIZES = ['S', 'M', 'L', 'XL'];
+
+// Helper to determine size type from category name (fallback)
+const getSizeTypeFromCategory = (categoryName) => {
+  if (!categoryName) return null;
+  const name = categoryName.toLowerCase();
+  const shoeKeywords = ['giày', 'giay', 'shoe', 'sneaker', 'boot', 'sandal', 'dép', 'dep'];
+  const clothingKeywords = ['áo', 'ao', 'quần', 'quan', 'shirt', 'jersey', 'top', 'pants', 'shorts', 'jacket', 'hoodie'];
+  if (shoeKeywords.some(k => name.includes(k))) return 'shoe';
+  if (clothingKeywords.some(k => name.includes(k))) return 'clothing';
+  return null;
+};
+
 class ProductDetail extends Component {
   constructor(props) {
     super(props);
@@ -31,6 +46,7 @@ class ProductDetail extends Component {
       addedToCart: false,
       addedToWishlist: false,
       activeTab: 'description',
+      sizeError: false,
     };
   }
 
@@ -45,7 +61,6 @@ class ProductDetail extends Component {
 
   fetchProduct = async () => {
     const slug = this.getProductSlug();
-    // Fetch categories for ID→name lookup
     let catLookup = new Map();
     try {
       const catRes = await api.get('/categories');
@@ -58,7 +73,6 @@ class ProductDetail extends Component {
       const res = await api.get(`/products/${slug}`);
       this.setState({ product: res.data, catLookup, loading: false });
     } catch (err) {
-      // Try fetching all products and finding by Slug or ID
       try {
         const res = await api.get('/products');
         const product = res.data.find((p) => p.slug === slug || p._id === slug);
@@ -70,6 +84,25 @@ class ProductDetail extends Component {
     }
   };
 
+  // Determine what sizes to show for this product
+  getAvailableSizes = () => {
+    const { product, catLookup } = this.state;
+    if (!product) return null;
+
+    // Priority 1: use sizeType field from DB
+    if (product.sizeType === 'shoe') return { type: 'shoe', sizes: SHOE_SIZES };
+    if (product.sizeType === 'clothing') return { type: 'clothing', sizes: CLOTHING_SIZES };
+    if (product.sizeType === 'none') return null;
+
+    // Priority 2: fallback — guess from category name
+    const categoryName = getCategoryName(product.category, catLookup);
+    const guessedType = getSizeTypeFromCategory(categoryName);
+    if (guessedType === 'shoe') return { type: 'shoe', sizes: SHOE_SIZES };
+    if (guessedType === 'clothing') return { type: 'clothing', sizes: CLOTHING_SIZES };
+
+    return null;
+  };
+
   handleAddToCart = () => {
     if (!this.props.isLoggedIn) {
       alert('Please login to add products to cart');
@@ -77,6 +110,14 @@ class ProductDetail extends Component {
     }
 
     const { product, quantity, selectedSize } = this.state;
+    const sizeInfo = this.getAvailableSizes();
+
+    // Validate: must select size if available
+    if (sizeInfo && !selectedSize) {
+      this.setState({ sizeError: true });
+      return;
+    }
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
     const existingIndex = cart.findIndex(
@@ -98,7 +139,7 @@ class ProductDetail extends Component {
     }
 
     localStorage.setItem('cart', JSON.stringify(cart));
-    this.setState({ addedToCart: true });
+    this.setState({ addedToCart: true, sizeError: false });
     setTimeout(() => this.setState({ addedToCart: false }), 2000);
   };
 
@@ -130,7 +171,7 @@ class ProductDetail extends Component {
   };
 
   render() {
-    const { product, quantity, catLookup, loading, addedToCart, addedToWishlist, activeTab } = this.state;
+    const { product, selectedSize, quantity, catLookup, loading, addedToCart, addedToWishlist, activeTab, sizeError } = this.state;
     const { isLoggedIn } = this.props;
 
     if (loading) {
@@ -153,6 +194,7 @@ class ProductDetail extends Component {
     }
 
     const categoryName = getCategoryName(product.category, catLookup);
+    const sizeInfo = this.getAvailableSizes();
 
     return (
       <div className="product-detail-page">
@@ -185,6 +227,37 @@ class ProductDetail extends Component {
                 {formatPrice(product.price)}
               </p>
 
+              {/* Size Selector */}
+              {sizeInfo && (
+                <div className="size-selector">
+                  <div className="size-selector-header">
+                    <label>
+                      {sizeInfo.type === 'shoe' ? 'Select Shoe Size' : 'Select Size'}
+                    </label>
+                    <span className="size-guide">Size Guide</span>
+                  </div>
+                  <div className="size-options">
+                    {sizeInfo.sizes.map((size) => (
+                      <button
+                        key={size}
+                        className={`size-option ${selectedSize === String(size) ? 'active' : ''}`}
+                        onClick={() => this.setState({ selectedSize: String(size), sizeError: false })}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                  {sizeError && (
+                    <div className="size-required-error">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Please select a size before adding to cart
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Quantity */}
               <div className="product-quantity">
                 <label>Quantity</label>
@@ -211,7 +284,11 @@ class ProductDetail extends Component {
                   className={`btn btn-primary btn-full ${addedToCart ? 'btn-success' : ''}`}
                   onClick={this.handleAddToCart}
                 >
-                  {addedToCart ? '✓ Added to Cart' : 'Add to Cart'}
+                  {addedToCart
+                    ? '✓ Added to Cart'
+                    : (sizeInfo && selectedSize
+                      ? `Add to Cart — Size ${selectedSize}`
+                      : 'Add to Cart')}
                 </button>
                 <button
                   className={`btn btn-outline btn-full ${addedToWishlist ? 'btn-success-outline' : ''}`}
@@ -256,6 +333,7 @@ class ProductDetail extends Component {
                   {activeTab === 'details' && (
                     <ul>
                       <li>Category: {categoryName}</li>
+                      {sizeInfo && <li>Available Sizes: {sizeInfo.sizes.join(', ')}</li>}
                       <li>Premium materials</li>
                       <li>Durable design</li>
                     </ul>
