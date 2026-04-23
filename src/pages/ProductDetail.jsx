@@ -21,7 +21,7 @@ const getCategoryName = (category, catLookup) => {
 
 // Size constants
 const SHOE_SIZES = [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
-const CLOTHING_SIZES = ['S', 'M', 'L', 'XL'];
+const CLOTHING_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
 // Helper to determine size type from category name (fallback)
 const getSizeTypeFromCategory = (categoryName) => {
@@ -88,6 +88,9 @@ class ProductDetail extends Component {
   getAvailableSizes = () => {
     const { product, catLookup } = this.state;
     if (!product) return null;
+
+    // Debug: log sizeType to console
+    console.log('[ProductDetail] sizeType:', product.sizeType, '| product:', product.name);
 
     // Priority 1: use sizeType field from DB
     if (product.sizeType === 'shoe') return { type: 'shoe', sizes: SHOE_SIZES };
@@ -196,6 +199,20 @@ class ProductDetail extends Component {
     const categoryName = getCategoryName(product.category, catLookup);
     const sizeInfo = this.getAvailableSizes();
 
+    // Parse details: có thể là string hoặc object
+    const detailsText = product.details
+      ? (typeof product.details === 'string'
+          ? product.details
+          : JSON.stringify(product.details, null, 2))
+      : null;
+
+    // Label loại size để hiển thị trong tab Details
+    const sizeTypeLabel =
+      product.sizeType === 'shoe' ? 'Giày (35 – 45)' :
+      product.sizeType === 'clothing' ? 'Áo/Quần (S, M, L, XL, XXL)' :
+      product.sizeType === 'none' ? 'Không có size' :
+      'Chưa phân loại';
+
     return (
       <div className="product-detail-page">
         <div className="product-detail-container">
@@ -232,9 +249,9 @@ class ProductDetail extends Component {
                 <div className="size-selector">
                   <div className="size-selector-header">
                     <label>
-                      {sizeInfo.type === 'shoe' ? 'Select Shoe Size' : 'Select Size'}
+                      {sizeInfo.type === 'shoe' ? 'Chọn cỡ giày' : 'Chọn size'}
                     </label>
-                    <span className="size-guide">Size Guide</span>
+                    <span className="size-guide">Hướng dẫn chọn size</span>
                   </div>
                   <div className="size-options">
                     {sizeInfo.sizes.map((size) => (
@@ -252,7 +269,7 @@ class ProductDetail extends Component {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Please select a size before adding to cart
+                      Vui lòng chọn size trước khi thêm vào giỏ hàng
                     </div>
                   )}
                 </div>
@@ -260,7 +277,7 @@ class ProductDetail extends Component {
 
               {/* Quantity */}
               <div className="product-quantity">
-                <label>Quantity</label>
+                <label>Số lượng</label>
                 <div className="quantity-controls">
                   <button
                     onClick={() => this.setState((s) => ({ quantity: Math.max(1, s.quantity - 1) }))}
@@ -285,22 +302,22 @@ class ProductDetail extends Component {
                   onClick={this.handleAddToCart}
                 >
                   {addedToCart
-                    ? '✓ Added to Cart'
+                    ? '✓ Đã thêm vào giỏ'
                     : (sizeInfo && selectedSize
-                      ? `Add to Cart — Size ${selectedSize}`
-                      : 'Add to Cart')}
+                      ? `Thêm vào giỏ — Size ${selectedSize}`
+                      : 'Thêm vào giỏ hàng')}
                 </button>
                 <button
                   className={`btn btn-outline btn-full ${addedToWishlist ? 'btn-success-outline' : ''}`}
                   onClick={this.handleAddToWishlist}
                 >
-                  {addedToWishlist ? '♥ Saved' : '♡ Wishlist'}
+                  {addedToWishlist ? '♥ Đã lưu' : '♡ Yêu thích'}
                 </button>
               </div>
 
               {!isLoggedIn && (
                 <p className="login-prompt">
-                  <Link to="/login">Login</Link> to add products to cart or wishlist
+                  <Link to="/login">Đăng nhập</Link> để thêm sản phẩm vào giỏ hoặc danh sách yêu thích
                 </p>
               )}
 
@@ -311,38 +328,75 @@ class ProductDetail extends Component {
                     className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'description' })}
                   >
-                    Description
+                    Mô tả
                   </button>
                   <button
                     className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'details' })}
                   >
-                    Details
+                    Chi tiết
                   </button>
                   <button
                     className={`tab-btn ${activeTab === 'shipping' ? 'active' : ''}`}
                     onClick={() => this.setState({ activeTab: 'shipping' })}
                   >
-                    Shipping
+                    Vận chuyển
                   </button>
                 </div>
                 <div className="product-tab-content">
                   {activeTab === 'description' && (
-                    <p>{product.description || 'High-quality product designed for performance and style.'}</p>
+                    <p style={{ whiteSpace: 'pre-line' }}>
+                      {product.description || 'Sản phẩm chất lượng cao, được thiết kế cho hiệu suất và phong cách.'}
+                    </p>
                   )}
+
                   {activeTab === 'details' && (
-                    <ul>
-                      <li>Category: {categoryName}</li>
-                      {sizeInfo && <li>Available Sizes: {sizeInfo.sizes.join(', ')}</li>}
-                      <li>Premium materials</li>
-                      <li>Durable design</li>
-                    </ul>
+                    <div className="product-details-tab">
+                      <table className="product-info-table">
+                        <tbody>
+                          <tr>
+                            <td className="info-label">Danh mục</td>
+                            <td className="info-value">{categoryName}</td>
+                          </tr>
+                          <tr>
+                            <td className="info-label">Loại size</td>
+                            <td className="info-value">{sizeTypeLabel}</td>
+                          </tr>
+                          {sizeInfo && (
+                            <tr>
+                              <td className="info-label">Size có sẵn</td>
+                              <td className="info-value">{sizeInfo.sizes.join(', ')}</td>
+                            </tr>
+                          )}
+                          {product.cdate && (
+                            <tr>
+                              <td className="info-label">Ngày thêm</td>
+                              <td className="info-value">{new Date(product.cdate).toLocaleDateString('vi-VN')}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+
+                      {detailsText && (
+                        <div className="product-details-text">
+                          <h4>Thông số kỹ thuật</h4>
+                          <p style={{ whiteSpace: 'pre-line' }}>{detailsText}</p>
+                        </div>
+                      )}
+
+                      {!detailsText && (
+                        <p style={{ color: 'var(--gray-500)', marginTop: '12px', fontSize: '14px' }}>
+                          Chưa có thông tin chi tiết cho sản phẩm này.
+                        </p>
+                      )}
+                    </div>
                   )}
+
                   {activeTab === 'shipping' && (
                     <div>
-                      <p>Free shipping on orders over 500,000₫</p>
-                      <p>Express shipping available at checkout</p>
-                      <p>Free returns within 30 days</p>
+                      <p>✅ Miễn phí vận chuyển cho đơn hàng trên 500,000₫</p>
+                      <p>🚀 Giao hàng nhanh có sẵn khi thanh toán</p>
+                      <p>🔄 Miễn phí đổi trả trong vòng 30 ngày</p>
                     </div>
                   )}
                 </div>

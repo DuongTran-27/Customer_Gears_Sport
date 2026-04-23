@@ -113,7 +113,7 @@ class Checkout extends Component {
         },
         totalAmount: this.getSubtotal(),
         paymentMethod: 'COD',
-        status: 'Pending',
+        status: 'pending',
       };
 
       const res = await api.post('/orders', orderData, {
@@ -128,18 +128,7 @@ class Checkout extends Component {
         loading: false,
       });
 
-      // Sync shipping address back to profile
-      try {
-        await api.put(`/user/${userId}`, {
-          phone: shippingInfo.phone,
-          address: {
-            street: shippingInfo.address,
-            city: shippingInfo.city,
-          },
-        });
-      } catch (syncErr) {
-        console.error('Could not sync address to profile:', syncErr);
-      }
+      // Note: address sync skipped here; user can update profile manually
     } catch (err) {
       console.error('Order error:', err);
       console.error('Order error response:', err.response?.data);

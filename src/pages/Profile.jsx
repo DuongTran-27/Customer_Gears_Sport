@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 import { Navigate } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -485,7 +485,7 @@ class Profile extends Component {
                       {orders.map(order => (
                         <tr key={order._id} style={{ borderBottom: '1px solid var(--gray-200)' }}>
                           <td style={{ padding: '12px 8px', fontWeight: '500' }}>#{order._id.substring(order._id.length - 6).toUpperCase()}</td>
-                          <td style={{ padding: '12px 8px' }}>{formatDate(order.createdAt)}</td>
+                          <td style={{ padding: '12px 8px' }}>{order.cdate ? new Date(order.cdate).toLocaleDateString('vi-VN') : '—'}</td>
                           <td style={{ padding: '12px 8px' }}>{order.totalAmount?.toLocaleString('en-US')} ₫</td>
                           <td style={{ padding: '12px 8px' }}>
                             <span style={{
@@ -493,17 +493,21 @@ class Profile extends Component {
                               borderRadius: '4px',
                               fontSize: '12px',
                               fontWeight: '600',
-                              backgroundColor: order.status === 'Completed' ? '#d1fae5'
-                                : order.status === 'Cancelled' ? '#fee2e2'
-                                  : '#fef3c7',
-                              color: order.status === 'Completed' ? '#065f46'
-                                : order.status === 'Cancelled' ? '#991b1b'
-                                  : '#92400e'
+                              backgroundColor:
+                                ['completed'].includes((order.status||'').toLowerCase()) ? '#d1fae5' :
+                                ['cancelled'].includes((order.status||'').toLowerCase()) ? '#fee2e2' :
+                                ['processing'].includes((order.status||'').toLowerCase()) ? '#dbeafe' :
+                                '#fef3c7',
+                              color:
+                                ['completed'].includes((order.status||'').toLowerCase()) ? '#065f46' :
+                                ['cancelled'].includes((order.status||'').toLowerCase()) ? '#991b1b' :
+                                ['processing'].includes((order.status||'').toLowerCase()) ? '#1e40af' :
+                                '#92400e'
                             }}>
-                              {order.status === 'Completed' ? 'Completed'
-                                : order.status === 'Cancelled' ? 'Cancelled'
-                                  : order.status === 'Processing' ? 'Processing'
-                                    : order.status === 'Pending' ? 'Pending'
+                              {(order.status||'').toLowerCase() === 'completed' ? 'Hoàn thành'
+                                : (order.status||'').toLowerCase() === 'cancelled' ? 'Đã huỷ'
+                                  : (order.status||'').toLowerCase() === 'processing' ? 'Đang xử lý'
+                                    : (order.status||'').toLowerCase() === 'pending' ? 'Chờ xử lý'
                                       : order.status}
                             </span>
                           </td>
@@ -566,15 +570,18 @@ class Profile extends Component {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                   <div>
                     <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--gray-500)' }}>Order Date</p>
-                    <p style={{ margin: 0, fontWeight: '500' }}>{formatDate(selectedOrder.createdAt)}</p>
+                    <p style={{ margin: 0, fontWeight: '500' }}>{selectedOrder.cdate ? new Date(selectedOrder.cdate).toLocaleDateString('vi-VN') : '—'}</p>
                   </div>
                   <div>
                     <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--gray-500)' }}>Status</p>
-                    <p style={{ margin: 0, fontWeight: '500', color: selectedOrder.status === 'Completed' ? '#059669' : 'inherit' }}>
-                      {selectedOrder.status === 'Completed' ? 'Completed'
-                        : selectedOrder.status === 'Cancelled' ? 'Cancelled'
-                          : selectedOrder.status === 'Processing' ? 'Processing'
-                            : selectedOrder.status === 'Pending' ? 'Pending'
+                    <p style={{ margin: 0, fontWeight: '500', color:
+                      ['completed'].includes((selectedOrder.status||'').toLowerCase()) ? '#059669' :
+                      ['cancelled'].includes((selectedOrder.status||'').toLowerCase()) ? '#dc2626' : 'inherit'
+                    }}>
+                      {(selectedOrder.status||'').toLowerCase() === 'completed' ? 'Hoàn thành'
+                        : (selectedOrder.status||'').toLowerCase() === 'cancelled' ? 'Đã huỷ'
+                          : (selectedOrder.status||'').toLowerCase() === 'processing' ? 'Đang xử lý'
+                            : (selectedOrder.status||'').toLowerCase() === 'pending' ? 'Chờ xử lý'
                               : selectedOrder.status}
                     </p>
                   </div>
